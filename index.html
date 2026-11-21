@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="id"><head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ryTECH · Logo Reveal 5 dtk</title>
+<style>
+:root{--navy:#050B1A;--mid:#0A1630;--light:#10244A;--blue:#1E6BFF;--cyan:#00D4FF;--mut:#8FA6C9}
+*{box-sizing:border-box}
+body{margin:0;background:var(--navy);color:#fff;font:15px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;padding:14px;max-width:760px;margin:auto}
+h1{font-size:19px;margin:0 0 2px}.sub{color:var(--mut);font-size:13px;margin:0 0 12px}
+.stage{border:1px solid rgba(0,212,255,.3);border-radius:12px;overflow:hidden;background:#000}
+canvas{display:block;width:100%;height:auto}
+.row{display:flex;gap:10px;align-items:center;margin:10px 0;flex-wrap:wrap}
+.row input[type=range]{flex:1;min-width:120px}
+.seg{display:inline-flex;border:1px solid rgba(0,212,255,.35);border-radius:99px;overflow:hidden}
+.seg button{background:transparent;color:var(--mut);border:0;padding:8px 14px;font:600 13px inherit}
+.seg button.on{background:var(--blue);color:#fff}
+.lbl{font-size:12px;color:var(--mut);margin-right:4px}
+button{font-family:inherit}
+.btn{background:var(--blue);color:#fff;border:0;border-radius:12px;padding:14px 18px;font:700 16px inherit;width:100%;margin-top:6px}
+.btn.alt{background:var(--light);font-weight:600;font-size:14px;padding:10px}
+.btn:disabled{opacity:.45}
+.ico{background:var(--light);color:#fff;border:0;border-radius:10px;width:44px;height:40px;font-size:16px}
+.bar{height:8px;background:var(--light);border-radius:6px;overflow:hidden;margin:10px 0 4px}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+.card{border:1px solid rgba(0,212,255,.25);background:var(--mid);border-radius:12px;padding:12px;margin-top:12px}
+.err{border-color:#ff5d6c}.err h3{color:#ff8a95}
+h3{margin:0 0 6px;font-size:15px}
+ul.chk{list-style:none;padding:0;margin:6px 0}ul.chk li{padding:3px 0;font-size:14px}
+.ok{color:#4ade80}.no{color:#ff8a95}.wn{color:#fbbf24}
+video{width:100%;border-radius:10px;background:#000}
+pre{white-space:pre-wrap;word-break:break-word;font:11.5px/1.4 ui-monospace,monospace;background:#02060f;padding:10px;border-radius:8px;max-height:300px;overflow:auto}
+a.dl{display:block;text-align:center;background:var(--cyan);color:#001018;font-weight:800;text-decoration:none;border-radius:12px;padding:14px;margin-top:10px}
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.cmp div{border-radius:10px;padding:10px;text-align:center;font-size:11px}
+.cmp .d{background:var(--navy);border:1px solid rgba(0,212,255,.25)}.cmp .l{background:#F3F6FB;color:#0A1630}.cmp img{width:100%}
+small{color:var(--mut)}
+details summary{cursor:pointer;color:var(--cyan);font-weight:600}
+</style></head>
+<body>
+<h1>ryTECH · Logo Reveal 5 detik</h1>
+<p class="sub">1280×720 / 1920×1080 · 30 FPS · 150 frame · 120 BPM · versi <span id="ver"></span></p>
+
+<div class="stage"><canvas id="cv" width="960" height="540"></canvas></div>
+<div class="row">
+  <button class="ico" id="play" aria-label="Putar/Jeda">⏸</button>
+  <input type="range" id="scrub" min="0" max="149" value="0">
+  <span id="tc" style="font-size:12px;color:var(--mut);min-width:64px;text-align:right">0 / 150</span>
+</div>
+<div class="row">
+  <span class="lbl">Logo</span><span class="seg" id="segLogo"><button data-v="a" class="on">A · glyph r</button><button data-v="b">B · cincin</button></span>
+</div>
+<div class="row">
+  <span class="lbl">Resolusi</span><span class="seg" id="segRes"><button data-v="720" class="on">720p (uji)</button><button data-v="1080">1080p (final)</button></span>
+  <label style="font-size:13px"><input type="checkbox" id="wantAudio" checked> Suara (AAC)</label>
+  <button class="ico" id="hear" style="width:auto;padding:0 12px;font-size:13px">🔊 Tes</button>
+</div>
+
+<button class="btn" id="btnExport" disabled>Export MP4</button>
+<button class="btn alt" id="btnCancel" hidden>Batalkan</button>
+<div class="bar"><i id="bar"></i></div>
+<div id="phase" style="font-size:13px;color:var(--mut)">Memuat…</div>
+
+<section class="card err" id="errBox" hidden><h3 id="errTitle"></h3><div id="errBody"></div></section>
+
+<section class="card" id="result" hidden>
+  <h3 id="resTitle"></h3>
+  <video id="vid" controls playsinline muted></video>
+  <ul class="chk" id="checks"></ul>
+  <a class="dl" id="dl" download="rytech-logo-reveal.mp4">⬇ Unduh MP4</a>
+  <div class="row" style="margin-top:8px">
+    <button class="btn alt" id="playOk" style="flex:1">✅ Terputar normal di HP</button>
+    <button class="btn alt" id="playBad" style="flex:1">❌ Tidak terputar</button>
+  </div>
+</section>
+
+<section class="card">
+  <details><summary>Laporan diagnostik (salin &amp; kirim ke saya)</summary>
+  <pre id="report">…</pre>
+  <button class="btn alt" id="btnCopy">Salin laporan</button></details>
+</section>
+<section class="card">
+  <details><summary>Bandingkan logo A vs B</summary>
+  <div class="cmp" id="cmp"></div></details>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script type="module">
+/* ================= KONFIGURASI ================= */
+const VERSION='proto-5s-1', MB_URL='https://cdn.jsdelivr.net/npm/mediabunny@1.61.3/+esm';
+const LOGOS={"a": {"dark": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-20 -30 622 188\" role=\"img\" aria-label=\"ryTECH A\"><title>ryTECH A</title><defs><linearGradient id=\"ad-tech\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#FFFFFF\"/><stop offset=\"0.45\" stop-color=\"#FFFFFF\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient><linearGradient id=\"ad-body\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#10244A\"/><stop offset=\"1.0\" stop-color=\"#050B1A\"/></linearGradient><linearGradient id=\"ad-edge\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#00D4FF\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient><filter id=\"ad-glow\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\"><feGaussianBlur stdDeviation=\"3.2\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter></defs><g id=\"symbol\"><path id=\"symbol-body\" d=\"M52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#ad-body)\"/><path id=\"symbol-ring\" d=\"M51.58 0.86Q60 -4 68.42 0.86L98.35 18.14Q106.77 23 106.77 32.72L106.77 67.28Q106.77 77 98.35 81.86L68.42 99.14Q60 104 51.58 99.14L21.65 81.86Q13.23 77 13.23 67.28L13.23 32.72Q13.23 23 21.65 18.14ZM52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#ad-edge)\" fill-rule=\"evenodd\" filter=\"url(#ad-glow)\"/><path id=\"symbol-glyph\" d=\"M45 33H54V46L73 33V44L54 58V70H45Z\" fill=\"#FFFFFF\"/><circle id=\"symbol-node\" cx=\"106.77\" cy=\"23\" r=\"6.5\" fill=\"#00D4FF\" filter=\"url(#ad-glow)\"/><circle id=\"symbol-node-core\" cx=\"106.77\" cy=\"23\" r=\"2.8\" fill=\"#FFFFFF\"/></g><g id=\"wordmark-ry\"><path id=\"letter-r\" d=\"M140 32H149V42C153 35 161 31 173 32V40.5C161 39.5 153 45 149 55V100H140Z\" fill=\"#00D4FF\" filter=\"url(#ad-glow)\"/><path id=\"letter-y\" d=\"M182 32H192.5L214 89L205 92ZM224 32H234L201 128L191.5 128Z\" fill=\"#00D4FF\" filter=\"url(#ad-glow)\"/></g><g id=\"wordmark-tech\"><path id=\"letter-T\" d=\"M244 0H322V24H295V100H271V24H244Z\" fill=\"url(#ad-tech)\"/><path id=\"letter-E\" d=\"M332 0H398V22H356V39H390V61H356V78H398V100H332Z\" fill=\"url(#ad-tech)\"/><path id=\"letter-C\" d=\"M496.3 17.86A50 50 0 1 0 496.3 82.14L477.92 66.71A26 26 0 1 1 477.92 33.29Z\" fill=\"url(#ad-tech)\"/><path id=\"letter-H\" d=\"M506 0H530V39H558V0H582V100H558V61H530V100H506Z\" fill=\"url(#ad-tech)\"/></g></svg>", "light": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-20 -30 622 188\" role=\"img\" aria-label=\"ryTECH A\"><title>ryTECH A</title><defs><linearGradient id=\"al-tech\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#050B1A\"/><stop offset=\"0.45\" stop-color=\"#050B1A\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient><linearGradient id=\"al-body\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#10244A\"/><stop offset=\"1.0\" stop-color=\"#050B1A\"/></linearGradient><linearGradient id=\"al-edge\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#00D4FF\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient></defs><g id=\"symbol\"><path id=\"symbol-body\" d=\"M52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#al-body)\"/><path id=\"symbol-ring\" d=\"M51.58 0.86Q60 -4 68.42 0.86L98.35 18.14Q106.77 23 106.77 32.72L106.77 67.28Q106.77 77 98.35 81.86L68.42 99.14Q60 104 51.58 99.14L21.65 81.86Q13.23 77 13.23 67.28L13.23 32.72Q13.23 23 21.65 18.14ZM52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#al-edge)\" fill-rule=\"evenodd\"/><path id=\"symbol-glyph\" d=\"M45 33H54V46L73 33V44L54 58V70H45Z\" fill=\"#FFFFFF\"/><circle id=\"symbol-node-halo\" cx=\"106.77\" cy=\"23\" r=\"9\" fill=\"#050B1A\"/><circle id=\"symbol-node\" cx=\"106.77\" cy=\"23\" r=\"6.5\" fill=\"#00D4FF\"/><circle id=\"symbol-node-core\" cx=\"106.77\" cy=\"23\" r=\"2.8\" fill=\"#FFFFFF\"/></g><g id=\"wordmark-ry\"><path id=\"letter-r\" d=\"M140 32H149V42C153 35 161 31 173 32V40.5C161 39.5 153 45 149 55V100H140Z\" fill=\"#1E6BFF\"/><path id=\"letter-y\" d=\"M182 32H192.5L214 89L205 92ZM224 32H234L201 128L191.5 128Z\" fill=\"#1E6BFF\"/></g><g id=\"wordmark-tech\"><path id=\"letter-T\" d=\"M244 0H322V24H295V100H271V24H244Z\" fill=\"url(#al-tech)\"/><path id=\"letter-E\" d=\"M332 0H398V22H356V39H390V61H356V78H398V100H332Z\" fill=\"url(#al-tech)\"/><path id=\"letter-C\" d=\"M496.3 17.86A50 50 0 1 0 496.3 82.14L477.92 66.71A26 26 0 1 1 477.92 33.29Z\" fill=\"url(#al-tech)\"/><path id=\"letter-H\" d=\"M506 0H530V39H558V0H582V100H558V61H530V100H506Z\" fill=\"url(#al-tech)\"/></g></svg>"}, "b": {"dark": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-20 -30 622 188\" role=\"img\" aria-label=\"ryTECH B\"><title>ryTECH B</title><defs><linearGradient id=\"bd-tech\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#FFFFFF\"/><stop offset=\"0.45\" stop-color=\"#FFFFFF\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient><linearGradient id=\"bd-body\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#10244A\"/><stop offset=\"1.0\" stop-color=\"#050B1A\"/></linearGradient><linearGradient id=\"bd-edge\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#00D4FF\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient><filter id=\"bd-glow\" x=\"-60%\" y=\"-60%\" width=\"220%\" height=\"220%\"><feGaussianBlur stdDeviation=\"3.2\" result=\"b\"/><feMerge><feMergeNode in=\"b\"/><feMergeNode in=\"SourceGraphic\"/></feMerge></filter></defs><g id=\"symbol\"><path id=\"symbol-body\" d=\"M52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#bd-body)\"/><path id=\"symbol-ring\" d=\"M51.58 0.86Q60 -4 68.42 0.86L98.35 18.14Q106.77 23 106.77 32.72L106.77 67.28Q106.77 77 98.35 81.86L68.42 99.14Q60 104 51.58 99.14L21.65 81.86Q13.23 77 13.23 67.28L13.23 32.72Q13.23 23 21.65 18.14ZM52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#bd-edge)\" fill-rule=\"evenodd\" filter=\"url(#bd-glow)\"/><circle id=\"symbol-node\" cx=\"106.77\" cy=\"23\" r=\"6.5\" fill=\"#00D4FF\" filter=\"url(#bd-glow)\"/><circle id=\"symbol-node-core\" cx=\"106.77\" cy=\"23\" r=\"2.8\" fill=\"#FFFFFF\"/></g><g id=\"wordmark-ry\"><path id=\"letter-r\" d=\"M140 32H149V42C153 35 161 31 173 32V40.5C161 39.5 153 45 149 55V100H140Z\" fill=\"#00D4FF\" filter=\"url(#bd-glow)\"/><path id=\"letter-y\" d=\"M182 32H192.5L214 89L205 92ZM224 32H234L201 128L191.5 128Z\" fill=\"#00D4FF\" filter=\"url(#bd-glow)\"/></g><g id=\"wordmark-tech\"><path id=\"letter-T\" d=\"M244 0H322V24H295V100H271V24H244Z\" fill=\"url(#bd-tech)\"/><path id=\"letter-E\" d=\"M332 0H398V22H356V39H390V61H356V78H398V100H332Z\" fill=\"url(#bd-tech)\"/><path id=\"letter-C\" d=\"M496.3 17.86A50 50 0 1 0 496.3 82.14L477.92 66.71A26 26 0 1 1 477.92 33.29Z\" fill=\"url(#bd-tech)\"/><path id=\"letter-H\" d=\"M506 0H530V39H558V0H582V100H558V61H530V100H506Z\" fill=\"url(#bd-tech)\"/></g></svg>", "light": "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"-20 -30 622 188\" role=\"img\" aria-label=\"ryTECH B\"><title>ryTECH B</title><defs><linearGradient id=\"bl-tech\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#050B1A\"/><stop offset=\"0.45\" stop-color=\"#050B1A\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient><linearGradient id=\"bl-body\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#10244A\"/><stop offset=\"1.0\" stop-color=\"#050B1A\"/></linearGradient><linearGradient id=\"bl-edge\" x1=\"0\" y1=\"0\" x2=\"1\" y2=\"1\"><stop offset=\"0.0\" stop-color=\"#00D4FF\"/><stop offset=\"1.0\" stop-color=\"#1E6BFF\"/></linearGradient></defs><g id=\"symbol\"><path id=\"symbol-body\" d=\"M52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#bl-body)\"/><path id=\"symbol-ring\" d=\"M51.58 0.86Q60 -4 68.42 0.86L98.35 18.14Q106.77 23 106.77 32.72L106.77 67.28Q106.77 77 98.35 81.86L68.42 99.14Q60 104 51.58 99.14L21.65 81.86Q13.23 77 13.23 67.28L13.23 32.72Q13.23 23 21.65 18.14ZM52.99 9.05Q60 5 67.01 9.05L91.96 23.45Q98.97 27.5 98.97 35.6L98.97 64.4Q98.97 72.5 91.96 76.55L67.01 90.95Q60 95 52.99 90.95L28.04 76.55Q21.03 72.5 21.03 64.4L21.03 35.6Q21.03 27.5 28.04 23.45Z\" fill=\"url(#bl-edge)\" fill-rule=\"evenodd\"/><circle id=\"symbol-node-halo\" cx=\"106.77\" cy=\"23\" r=\"9\" fill=\"#050B1A\"/><circle id=\"symbol-node\" cx=\"106.77\" cy=\"23\" r=\"6.5\" fill=\"#00D4FF\"/><circle id=\"symbol-node-core\" cx=\"106.77\" cy=\"23\" r=\"2.8\" fill=\"#FFFFFF\"/></g><g id=\"wordmark-ry\"><path id=\"letter-r\" d=\"M140 32H149V42C153 35 161 31 173 32V40.5C161 39.5 153 45 149 55V100H140Z\" fill=\"#1E6BFF\"/><path id=\"letter-y\" d=\"M182 32H192.5L214 89L205 92ZM224 32H234L201 128L191.5 128Z\" fill=\"#1E6BFF\"/></g><g id=\"wordmark-tech\"><path id=\"letter-T\" d=\"M244 0H322V24H295V100H271V24H244Z\" fill=\"url(#bl-tech)\"/><path id=\"letter-E\" d=\"M332 0H398V22H356V39H390V61H356V78H398V100H332Z\" fill=\"url(#bl-tech)\"/><path id=\"letter-C\" d=\"M496.3 17.86A50 50 0 1 0 496.3 82.14L477.92 66.71A26 26 0 1 1 477.92 33.29Z\" fill=\"url(#bl-tech)\"/><path id=\"letter-H\" d=\"M506 0H530V39H558V0H582V100H558V61H530V100H506Z\" fill=\"url(#bl-tech)\"/></g></svg>"}};
+const FPS=30, FRAMES=150, VB={x:-20,y:-30,w:622,h:188}, K=1.75, CX=960, CY=470, VCX=291, VCY=50, FLOORY=625;
+const GROUPS={
+  sym:{ids:['symbol-body','symbol-ring','symbol-glyph','symbol-node-halo','symbol-node','symbol-node-core'],t:[15,60,50,72]},
+  ry:{ids:['letter-r','letter-y'],t:[30,72,62,84]},
+  T:{ids:['letter-T'],t:[45,84,76,96]}, E:{ids:['letter-E'],t:[52,90,82,102]},
+  C:{ids:['letter-C'],t:[59,96,88,108]}, H:{ids:['letter-H'],t:[66,102,94,114]}
+};
+const GN=Object.keys(GROUPS);
+const $=id=>document.getElementById(id);
+const clamp=(x,a,b)=>Math.min(b,Math.max(a,x));
+const rng=s=>()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const fmtB=n=>n>1e6?(n/1e6).toFixed(2)+' MB':(n/1e3).toFixed(0)+' KB';
+$('ver').textContent=VERSION;
+
+/* ================= ADEGAN (Canvas 2D + GSAP) ================= */
+function buildTimeline(S){
+  const f=x=>x/FPS, tl=gsap.timeline({paused:true});
+  tl.fromTo(S,{fade:0},{fade:1,duration:f(15),ease:'power1.out'},0);
+  tl.fromTo(S,{yaw:-0.32},{yaw:0.32,duration:f(150),ease:'sine.inOut'},0);
+  tl.fromTo(S,{push:0.94},{push:1.06,duration:f(150),ease:'power1.inOut'},0);
+  tl.fromTo(S,{streak:0},{streak:1,duration:f(12),ease:'power1.out'},0);
+  tl.to(S,{streak:0,duration:f(40),ease:'power1.in'},f(24));
+  tl.fromTo(S,{grid:0},{grid:1,duration:f(30),ease:'power1.inOut',immediateRender:false},f(60));
+  tl.fromTo(S,{sweep:0},{sweep:1,duration:f(36),ease:'power1.inOut',immediateRender:false},f(90));
+  tl.fromTo(S,{flash:0},{flash:1,duration:f(3),ease:'power2.out',immediateRender:false},f(90));
+  tl.to(S,{flash:0,duration:f(24),ease:'power2.in'},f(93));
+  tl.fromTo(S,{pulse:0},{pulse:1,duration:f(6),ease:'power2.out',immediateRender:false},f(90));
+  tl.to(S,{pulse:0,duration:f(30),ease:'power2.inOut'},f(96));
+  for(const [g,d] of Object.entries(GROUPS)){const [a0,a1,s0,s1]=d.t;
+    tl.fromTo(S.P,{[g]:0},{[g]:1,duration:f(a1-a0),ease:'power2.inOut',immediateRender:false},f(a0));
+    tl.fromTo(S.A,{[g]:0},{[g]:1,duration:f(s1-s0),ease:'power1.inOut',immediateRender:false},f(s0));}
+  tl.set({},{},f(FRAMES));
+  return tl;
+}
+async function rasterGroups(svgText,scale){
+  const all=new Set(GN.flatMap(g=>GROUPS[g].ids)), out={};
+  const w=Math.round(VB.w*scale), h=Math.round(VB.h*scale);
+  for(const g of GN){
+    const svg=new DOMParser().parseFromString(svgText,'image/svg+xml').documentElement;
+    svg.querySelectorAll('path,circle').forEach(el=>{const id=el.getAttribute('id');if(id&&all.has(id)&&!GROUPS[g].ids.includes(id))el.remove();});
+    svg.setAttribute('width',w);svg.setAttribute('height',h);
+    const url=URL.createObjectURL(new Blob([new XMLSerializer().serializeToString(svg)],{type:'image/svg+xml'}));
+    const img=new Image();img.src=url;await img.decode();
+    const c=document.createElement('canvas');c.width=w;c.height=h;c.getContext('2d').drawImage(img,0,0,w,h);
+    URL.revokeObjectURL(url);out[g]=c;
+  }
+  return out;
+}
+function sprite(rgb){const c=document.createElement('canvas');c.width=c.height=64;const x=c.getContext('2d');
+  const g=x.createRadialGradient(32,32,0,32,32,32);g.addColorStop(0,`rgba(${rgb},1)`);g.addColorStop(.3,`rgba(${rgb},.45)`);g.addColorStop(1,`rgba(${rgb},0)`);
+  x.fillStyle=g;x.fillRect(0,0,64,64);return c;}
+
+function makeScene(variant,W,H){
+  const canvas=document.createElement('canvas');canvas.width=W;canvas.height=H;
+  const ctx=canvas.getContext('2d'), k=W/1920;
+  const S={fade:0,yaw:0,push:1,grid:0,streak:0,flash:0,pulse:0,sweep:0,
+    P:{sym:0,ry:0,T:0,E:0,C:0,H:0},A:{sym:0,ry:0,T:0,E:0,C:0,H:0}};
+  const tl=buildTimeline(S);
+  const bcv=document.createElement('canvas');bcv.width=Math.ceil(W/4);bcv.height=Math.ceil(H/4);const bctx=bcv.getContext('2d');
+  let G,lcv,lctx,rcv,rctx,SP,N,pt={},dust=[],streaks=[];
+  const colIdx=(r,g)=>r>200?1:(g>170?0:2);
+  async function init(){
+    const sc=K*k;G=await rasterGroups(LOGOS[variant].dark,sc);
+    const w=G.sym.width,h=G.sym.height;
+    lcv=document.createElement('canvas');lcv.width=w;lcv.height=h;lctx=lcv.getContext('2d');
+    rcv=document.createElement('canvas');rcv.width=w;rcv.height=h;rctx=rcv.getContext('2d');
+    SP=[sprite('0,212,255'),sprite('255,255,255'),sprite('30,107,255')];
+    // titik target partikel dari piksel logo
+    const r=rng(7),pts=[];let tot=0;
+    const small=document.createElement('canvas');small.width=VB.w;small.height=VB.h;const sx=small.getContext('2d',{willReadFrequently:true});
+    for(const g of GN){sx.clearRect(0,0,VB.w,VB.h);sx.drawImage(G[g],0,0,VB.w,VB.h);
+      const d=sx.getImageData(0,0,VB.w,VB.h).data,list=[];
+      for(let i=0;i<d.length;i+=4)if(d[i+3]>150)list.push(i);
+      pts.push({g,d,list});tot+=list.length;}
+    const TOTAL=2600;N=0;const arr=[];
+    pts.forEach((p,gi)=>{const n=Math.max(40,Math.round(TOTAL*p.list.length/tot));
+      for(let j=0;j<n&&p.list.length;j++){const i=p.list[Math.floor(r()*p.list.length)];const px=(i/4)%VB.w,py=Math.floor(i/4/VB.w);
+        arr.push({gi,u:VB.x+px+r(),v:VB.y+py+r(),c:colIdx(p.d[i],p.d[i+1])});}});
+    N=arr.length;
+    pt={g:new Uint8Array(N),tx:new Float32Array(N),ty:new Float32Array(N),sx:new Float32Array(N),sy:new Float32Array(N),
+        d:new Float32Array(N),amp:new Float32Array(N),ang:new Float32Array(N),c:new Uint8Array(N)};
+    arr.forEach((a,i)=>{pt.g[i]=a.gi;pt.tx[i]=CX+(a.u-VCX)*K;pt.ty[i]=CY+(a.v-VCY)*K;pt.c[i]=a.c;
+      const an=r()*6.2832,rad=800+r()*700;pt.sx[i]=CX+Math.cos(an)*rad*1.3;pt.sy[i]=CY+Math.sin(an)*rad*.8;
+      pt.d[i]=r()*.3;pt.amp[i]=40+r()*160;pt.ang[i]=r()*6.2832;});
+    for(let i=0;i<420;i++)dust.push({x:r()*1920,y:r()*1080,z:.25+r()*.75,vx:(r()-.5)*14,ph:r()*6.28,c:r()<.7?0:2});
+    for(let i=0;i<9;i++)streaks.push({y:180+r()*720,len:300+r()*500,sp:900+r()*1400,off:r()*2400,c:r()<.5?0:2});
+  }
+  function draw(n){
+    const t=n/FPS;tl.time(t,false);
+    const cosY=Math.cos(S.yaw),sinY=Math.sin(S.yaw),push=S.push;
+    const proj=(x,y)=>{const dx=x-CX,dy=y-CY;return[CX+dx*cosY*push,CY+dy*push+dx*sinY*.10*push];};
+    ctx.setTransform(k,0,0,k,0,0);ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;ctx.filter='none';
+    let g=ctx.createRadialGradient(960,430,60,960,540,1100);g.addColorStop(0,'#0A1630');g.addColorStop(1,'#050B1A');
+    ctx.fillStyle=g;ctx.fillRect(0,0,1920,1080);
+    ctx.globalCompositeOperation='lighter';
+    // light streak
+    if(S.streak>.01)for(const s of streaks){const x=((t*s.sp+s.off)%(1920+s.len))-s.len;
+      const gr=ctx.createLinearGradient(x,0,x+s.len,0);const col=s.c?'30,107,255':'0,212,255';
+      gr.addColorStop(0,`rgba(${col},0)`);gr.addColorStop(.7,`rgba(${col},${.5*S.streak})`);gr.addColorStop(1,`rgba(255,255,255,${.8*S.streak})`);
+      ctx.fillStyle=gr;ctx.fillRect(x,s.y,s.len,1.6);}
+    // debu parallax
+    for(const d of dust){const x=(((d.x+d.vx*t*d.z+S.yaw*120*(d.z-.6))%1920)+1920)%1920,y=(((d.y-14*t*d.z)%1080)+1080)%1080;
+      ctx.globalAlpha=(.12+.5*d.z)*S.fade*(.65+.35*Math.sin(t*2+d.ph));const s=2+d.z*7;ctx.drawImage(SP[d.c],x-s/2,y-s/2,s,s);}
+    // grid lantai
+    if(S.grid>.01){ctx.globalAlpha=1;ctx.lineWidth=1.2;const vx=960+S.yaw*220;
+      for(let i=0;i<9;i++){const y=FLOORY+14+Math.pow(i/8,1.8)*(1080-FLOORY-14),a=.16*S.grid*(1-i/10);
+        ctx.strokeStyle=`rgba(0,212,255,${a})`;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(1920,y);ctx.stroke();}
+      for(let i=-10;i<=10;i++){ctx.strokeStyle=`rgba(0,212,255,${.13*S.grid*(1-Math.abs(i)/12)})`;ctx.beginPath();ctx.moveTo(vx+i*14,FLOORY+14);ctx.lineTo(vx+i*190,1080);ctx.stroke();}}
+    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+    // komposit logo solid
+    lctx.globalCompositeOperation='source-over';lctx.clearRect(0,0,lcv.width,lcv.height);
+    for(const gn of GN){const a=S.A[gn];if(a>.003){lctx.globalAlpha=a;lctx.drawImage(G[gn],0,0);}}
+    lctx.globalAlpha=1;
+    if(S.sweep>0&&S.sweep<1){const w=lcv.width,bw=w*.18,x0=-bw+(w+bw*2)*S.sweep;
+      lctx.globalCompositeOperation='source-atop';const gr=lctx.createLinearGradient(x0,0,x0+bw,-bw*.45);
+      gr.addColorStop(0,'rgba(255,255,255,0)');gr.addColorStop(.5,'rgba(255,255,255,.9)');gr.addColorStop(1,'rgba(255,255,255,0)');
+      lctx.fillStyle=gr;lctx.fillRect(0,0,w,lcv.height);lctx.globalCompositeOperation='source-over';}
+    const X0=CX+(VB.x-VCX)*K,Y0=CY+(VB.y-VCY)*K,LW=VB.w*K,LH=VB.h*K;
+    // refleksi
+    rctx.globalCompositeOperation='source-over';rctx.clearRect(0,0,rcv.width,rcv.height);
+    rctx.save();rctx.translate(0,rcv.height);rctx.scale(1,-1);rctx.drawImage(lcv,0,0);rctx.restore();
+    rctx.globalCompositeOperation='destination-in';const rg=rctx.createLinearGradient(0,0,0,rcv.height);rg.addColorStop(0,'rgba(0,0,0,.34)');rg.addColorStop(.7,'rgba(0,0,0,0)');
+    rctx.fillStyle=rg;rctx.fillRect(0,0,rcv.width,rcv.height);rctx.globalCompositeOperation='source-over';
+    ctx.save();ctx.translate(CX,CY);ctx.transform(cosY*push,sinY*.10*push,0,push,0,0);ctx.translate(-CX,-CY);
+    ctx.drawImage(rcv,X0,2*FLOORY-Y0-LH,LW,LH);ctx.drawImage(lcv,X0,Y0,LW,LH);ctx.restore();
+    // partikel
+    ctx.globalCompositeOperation='lighter';
+    for(let i=0;i<N;i++){const gn=GN[pt.g[i]],P=S.P[gn];if(P<=.001)continue;
+      const l=clamp((P-pt.d[i])/.7,0,1),e=1-Math.pow(1-l,3),A=S.A[gn];
+      const al=Math.min(1,l*4)*(1-.9*A)+.1*A*l;if(al<.02)continue;
+      const [tx,ty]=proj(pt.tx[i],pt.ty[i]),sw=Math.sin(Math.PI*l)*pt.amp[i]*(1-A);
+      const x=pt.sx[i]+(tx-pt.sx[i])*e+Math.cos(pt.ang[i])*sw,y=pt.sy[i]+(ty-pt.sy[i])*e+Math.sin(pt.ang[i])*sw,s=7+6*e;
+      ctx.globalAlpha=al;ctx.drawImage(SP[pt.c[i]],x-s/2,y-s/2,s,s);}
+    // flash + lens flare
+    if(S.flash>.01){ctx.globalAlpha=1;const fg=ctx.createRadialGradient(CX,CY,0,CX,CY,760);
+      fg.addColorStop(0,`rgba(180,240,255,${.28*S.flash})`);fg.addColorStop(1,'rgba(0,212,255,0)');ctx.fillStyle=fg;ctx.fillRect(0,0,1920,1080);
+      const hg=ctx.createLinearGradient(CX-950,0,CX+950,0);hg.addColorStop(0,'rgba(0,212,255,0)');hg.addColorStop(.5,`rgba(255,255,255,${.85*S.flash})`);hg.addColorStop(1,'rgba(0,212,255,0)');
+      ctx.fillStyle=hg;ctx.fillRect(CX-950,CY-3,1900,6);}
+    // bloom
+    ctx.setTransform(1,0,0,1,0,0);bctx.clearRect(0,0,bcv.width,bcv.height);
+    if('filter' in bctx)bctx.filter='blur(3px)';bctx.drawImage(canvas,0,0,bcv.width,bcv.height);bctx.filter='none';
+    ctx.globalCompositeOperation='lighter';ctx.globalAlpha=.38+S.pulse*.3;ctx.drawImage(bcv,0,0,W,H);
+    // vignette + fade-in
+    ctx.globalCompositeOperation='source-over';ctx.globalAlpha=1;
+    const vg=ctx.createRadialGradient(W/2,H/2,H*.35,W/2,H/2,H*1.0);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+    if(S.fade<1){ctx.fillStyle=`rgba(0,0,0,${1-S.fade})`;ctx.fillRect(0,0,W,H);}
+  }
+  return {canvas,init,draw};
+}
+
+/* ================= AUDIO SINTETIS 120 BPM ================= */
+async function synthAudio(){
+  const sr=48000,oc=new OfflineAudioContext(2,sr*5,sr);
+  const master=oc.createGain();master.gain.setValueAtTime(.8,0);master.gain.setValueAtTime(.8,4.6);master.gain.linearRampToValueAtTime(0,5);
+  const comp=oc.createDynamicsCompressor();master.connect(comp);comp.connect(oc.destination);
+  const tone=(type,f,t0,dur,vol,f2)=>{const o=oc.createOscillator(),g=oc.createGain();o.type=type;o.frequency.setValueAtTime(f,t0);
+    if(f2)o.frequency.exponentialRampToValueAtTime(f2,t0+dur);g.gain.setValueAtTime(1e-4,t0);g.gain.exponentialRampToValueAtTime(vol,t0+.02);
+    g.gain.exponentialRampToValueAtTime(1e-4,t0+dur);o.connect(g);g.connect(master);o.start(t0);o.stop(t0+dur+.05);};
+  [110,164.81,220].forEach(f=>{const o=oc.createOscillator(),g=oc.createGain();o.type='triangle';o.frequency.value=f;
+    g.gain.setValueAtTime(1e-4,0);g.gain.linearRampToValueAtTime(.07,3);g.gain.setValueAtTime(.07,5);o.connect(g);g.connect(master);o.start(0);o.stop(5);});
+  {const o=oc.createOscillator(),lp=oc.createBiquadFilter(),g=oc.createGain();o.type='sawtooth';o.frequency.setValueAtTime(80,.5);o.frequency.exponentialRampToValueAtTime(900,3);
+    lp.type='lowpass';lp.frequency.setValueAtTime(300,.5);lp.frequency.exponentialRampToValueAtTime(5000,3);g.gain.setValueAtTime(0,.5);g.gain.linearRampToValueAtTime(.12,3);g.gain.linearRampToValueAtTime(0,3.05);
+    o.connect(lp);lp.connect(g);g.connect(master);o.start(.5);o.stop(3.1);}
+  [1.5,1.75,2.0,2.25].forEach(t=>tone('square',2200,t,.05,.05));
+  tone('sine',110,3.0,.8,.9,38);
+  {const len=Math.floor(sr*.7),b=oc.createBuffer(1,len,sr),d=b.getChannelData(0),r=rng(11);for(let i=0;i<len;i++)d[i]=(r()*2-1)*Math.pow(1-i/len,2);
+    const s=oc.createBufferSource(),hp=oc.createBiquadFilter(),g=oc.createGain();s.buffer=b;hp.type='highpass';hp.frequency.value=3000;g.gain.value=.3;s.connect(hp);hp.connect(g);g.connect(master);s.start(3.0);}
+  [880,1318.5,1760,1318.5,880,1318.5].forEach((f,i)=>tone('sine',f,3.0+i*.25,.4,.07));
+  return oc.startRendering();
+}
+
+/* ================= STATE, LAPORAN ================= */
+const st={variant:'a',res:720,scene:null,playing:true,t0:performance.now(),busy:false,abort:false,mb:null,
+  rep:{env:{},support:{},settings:{},timing:{},checks:[],error:null,userPlayback:'belum dikonfirmasi',steps:[]}};
+const logStep=m=>{st.rep.steps.push(`[${(performance.now()/1000).toFixed(1)}s] ${m}`);renderReport();};
+function renderReport(){
+  const r=st.rep,L=[];
+  L.push(`ryTECH laporan uji ${VERSION}`,`waktu: ${new Date().toISOString()}`,'');
+  L.push('== PERANGKAT =='); for(const [k,v] of Object.entries(r.env))L.push(`${k}: ${v}`);
+  L.push('','== DUKUNGAN =='); for(const [k,v] of Object.entries(r.support))L.push(`${k}: ${v}`);
+  L.push('','== PENGATURAN =='); for(const [k,v] of Object.entries(r.settings))L.push(`${k}: ${v}`);
+  L.push('','== WAKTU =='); for(const [k,v] of Object.entries(r.timing))L.push(`${k}: ${v}`);
+  L.push('','== PEMERIKSAAN OTOMATIS ==');r.checks.forEach(c=>L.push(`${c.ok===true?'[OK]':c.ok===false?'[GAGAL]':'[INFO]'} ${c.label}${c.detail?' — '+c.detail:''}`));
+  L.push('',`pemutaran di HP (konfirmasi pengguna): ${r.userPlayback}`);
+  if(r.error)L.push('','== ERROR ==',r.error);
+  L.push('','== LANGKAH =='); r.steps.slice(-25).forEach(s=>L.push(s));
+  $('report').textContent=L.join('\n');
+}
+async function collectEnv(){
+  const e=st.rep.env,ua=navigator.userAgent,u=navigator.userAgentData;let hi={};
+  try{if(u?.getHighEntropyValues)hi=await u.getHighEntropyValues(['model','platformVersion','fullVersionList']);}catch{}
+  e['Chrome']=(hi.fullVersionList?.find(b=>/Chrom/.test(b.brand)&&!/Not/.test(b.brand))?.version)||(ua.match(/Chrome\/([\d.]+)/)||[])[1]||'?';
+  e['Android']=hi.platformVersion||(ua.match(/Android ([\d.]+)/)||[])[1]||'?';
+  e['Model']=hi.model||'(disembunyikan oleh Chrome)';
+  e['RAM (perkiraan, maks 8)']=navigator.deviceMemory?navigator.deviceMemory+' GB':'tidak terdeteksi';
+  e['CPU core']=navigator.hardwareConcurrency||'?';
+  e['Layar']=`${screen.width}x${screen.height} @${devicePixelRatio}x`;
+  e['Secure context']=isSecureContext;
+  if(performance.memory)e['JS heap limit']=fmtB(performance.memory.jsHeapSizeLimit);
+  e['User-Agent']=ua;
+}
+
+/* ================= PREVIEW ================= */
+const cv=$('cv'),cx=cv.getContext('2d');
+let frameShown=-1;
+async function loadPreview(){
+  $('phase').textContent='Menyiapkan pratinjau…';
+  st.scene=null;st.scene=makeScene(st.variant,960,540);await st.scene.init();$('phase').textContent=st.mbReady?'Siap.':$('phase').textContent;
+}
+function loop(){
+  if(!st.busy&&st.scene){
+    let n=frameShown;
+    if(st.playing){n=Math.floor(((performance.now()-st.t0)/1000*FPS))%FRAMES;$('scrub').value=n;}else n=+$('scrub').value;
+    if(n!==frameShown){st.scene.draw(n);cx.drawImage(st.scene.canvas,0,0);frameShown=n;$('tc').textContent=`${n+1} / ${FRAMES}`;}
+  }
+  requestAnimationFrame(loop);
+}
+$('play').onclick=()=>{st.playing=!st.playing;$('play').textContent=st.playing?'⏸':'▶';if(st.playing)st.t0=performance.now()-(+$('scrub').value/FPS*1000);};
+$('scrub').oninput=()=>{st.playing=false;$('play').textContent='▶';frameShown=-1;};
+function seg(id,cb){$(id).onclick=e=>{const b=e.target.closest('button');if(!b)return;[...$(id).children].forEach(x=>x.classList.toggle('on',x===b));cb(b.dataset.v);};}
+seg('segLogo',async v=>{st.variant=v;frameShown=-1;await loadPreview();});
+seg('segRes',v=>{st.res=+v;});
+let hearCtx=null;
+$('hear').onclick=async()=>{try{const b=await synthAudio();hearCtx=hearCtx||new AudioContext();const s=hearCtx.createBufferSource();s.buffer=b;s.connect(hearCtx.destination);s.start();}catch(e){showErr('Tes suara gagal',e);}};
+
+/* ================= PROBE & EKSPOR ================= */
+function explain(e){
+  const m=String(e&&e.message||e),n=e&&e.name||'Error';
+  if(n==='LibraryLoadError')return['Pustaka gagal dimuat',m+'\nPeriksa koneksi internet, matikan pemblokir iklan/VPN, lalu muat ulang halaman.'];
+  if(n==='AbortError'||m==='DIBATALKAN')return['Dibatalkan','Ekspor dihentikan oleh Anda.'];
+  if(n==='NotSupportedError'||/not supported|unsupported|configure/i.test(m))return['Encoder tidak mendukung pengaturan ini','Coba resolusi 720p, atau matikan opsi Suara. Detail: '+m];
+  if(/memory|allocation/i.test(m)||n==='RangeError')return['Memori tidak cukup','Tutup tab/aplikasi lain, pilih 720p, lalu coba lagi. Detail: '+m];
+  if(n==='EncodingError'||/encod/i.test(m))return['Encoder gagal saat bekerja','Encoder bawaan HP menolak/gagal. Detail: '+n+': '+m];
+  return[`Gagal (${n})`,m];
+}
+function showErr(title,e){const [t,b]=Array.isArray(e)?e:explain(e);$('errTitle').textContent=title&&title!==true?title+' — '+t:t;$('errBody').textContent=b;$('errBox').hidden=false;st.rep.error=`${t}: ${b}`;renderReport();}
+function addCheck(label,ok,detail){st.rep.checks.push({label,ok,detail});}
+
+async function loadMB(){
+  if(st.mb)return st.mb;
+  const t0=performance.now();
+  try{st.mb=await import(MB_URL);}catch(e){const er=new Error(`${MB_URL} — ${e&&e.message||e}`);er.name='LibraryLoadError';throw er;}
+  st.rep.timing['muat Mediabunny (ms)']=Math.round(performance.now()-t0);return st.mb;
+}
+async function probeH264(W,H){ // enkode nyata beberapa frame lalu dekode — bukan hanya isConfigSupported
+  if(!('VideoEncoder'in window))throw Object.assign(new Error('WebCodecs VideoEncoder tidak ada'),{name:'NotSupportedError'});
+  const codec=H>=1000?'avc1.640028':'avc1.64001f';
+  const cfg={codec,width:W,height:H,bitrate:4e6,framerate:FPS,latencyMode:'quality',avc:{format:'avc'}};
+  const sup=await VideoEncoder.isConfigSupported(cfg);
+  if(!sup.supported)throw Object.assign(new Error(`isConfigSupported=false untuk ${codec} ${W}x${H}`),{name:'NotSupportedError'});
+  const c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+  const chunks=[];let err=null,dcfg=null;
+  const enc=new VideoEncoder({output:(ch,m)=>{chunks.push(ch);if(m&&m.decoderConfig)dcfg=m.decoderConfig;},error:e=>err=e});
+  enc.configure(cfg);const t0=performance.now();
+  for(let i=0;i<6;i++){x.fillStyle=i%2?'#1E6BFF':'#00D4FF';x.fillRect(0,0,W,H);x.fillStyle='#050B1A';x.fillRect(i*40,i*20,W/2,H/2);
+    const vf=new VideoFrame(c,{timestamp:i*33333,duration:33333});enc.encode(vf,{keyFrame:i===0});vf.close();}
+  await enc.flush();enc.close();if(err)throw err;
+  const ms=(performance.now()-t0)/6;
+  if(chunks.length<6)throw new Error(`hanya ${chunks.length}/6 chunk keluar dari encoder`);
+  let dec=0;try{const d=new VideoDecoder({output:f=>{dec++;f.close();},error:e=>{err=e;}});d.configure(dcfg||{codec,codedWidth:W,codedHeight:H});
+    for(const ch of chunks)d.decode(ch);await d.flush();d.close();}catch(e){err=e;}
+  return {codec,ms:ms.toFixed(1),dec,decErr:err?String(err.message||err):null};
+}
+async function initSupport(){
+  const s=st.rep.support;
+  s['WebCodecs VideoEncoder']='VideoEncoder'in window;s['WebCodecs AudioEncoder']='AudioEncoder'in window;
+  s['OffscreenCanvas']='OffscreenCanvas'in window;s['GSAP']=typeof gsap!=='undefined';
+  try{await loadMB();s['Mediabunny']='dimuat';
+    const v=await (st.mb.canEncodeVideo?.('avc',{width:1280,height:720,bitrate:5e6}));s['Mediabunny canEncodeVideo avc 720p']=v;
+    const v2=await (st.mb.canEncodeVideo?.('avc',{width:1920,height:1080,bitrate:8e6}));s['Mediabunny canEncodeVideo avc 1080p']=v2;
+    const a=await st.mb.canEncodeAudio('aac');s['Mediabunny canEncodeAudio aac']=a;
+    if(!a){$('wantAudio').checked=false;$('wantAudio').disabled=true;}
+    st.mbReady=true;
+  }catch(e){s['Mediabunny']='GAGAL: '+(e.message||e);showErr('',e);}
+  if(typeof gsap==='undefined')showErr('GSAP gagal dimuat',['GSAP tidak termuat','Periksa koneksi internet lalu muat ulang.']);
+  renderReport();
+}
+
+async function doExport(){
+  if(st.busy)return;st.busy=true;st.abort=false;
+  $('errBox').hidden=true;$('result').hidden=true;$('btnExport').disabled=true;$('btnCancel').hidden=false;$('bar').style.width='0%';
+  const r=st.rep;r.checks=[];r.error=null;r.userPlayback='belum dikonfirmasi';r.steps=[];
+  const H=st.res,W=H*16/9,bitrate=H>=1000?8e6:5e6;
+  r.settings={logo:st.variant.toUpperCase(),resolusi:`${W}x${H}`,fps:FPS,frame:FRAMES,'bitrate video':bitrate,'suara':$('wantAudio').checked};
+  let wake=null;const t00=performance.now();
+  const abortCheck=()=>{if(st.abort)throw Object.assign(new Error('DIBATALKAN'),{name:'AbortError'});};
+  try{
+    try{wake=await navigator.wakeLock?.request('screen');}catch{}
+    r.timing['wake lock']=wake?'aktif':'tidak tersedia';
+    const MB=await loadMB();
+    $('phase').textContent='1/4 Uji encoder H.264 (enkode nyata)…';logStep('probe H.264');
+    const p=await probeH264(W,H);
+    addCheck('Encoder H.264 nyata + dekode balik',!p.decErr&&p.dec>=6,`${p.codec}, ${p.ms} ms/frame, dekode ${p.dec}/6${p.decErr?' ('+p.decErr+')':''}`);
+    if(p.decErr||p.dec<6)throw Object.assign(new Error('Encoder jalan tetapi hasilnya tidak bisa didekode: '+(p.decErr||p.dec+'/6')),{name:'EncodingError'});
+    abortCheck();
+    let audioBuf=null,wantA=$('wantAudio').checked;
+    if(wantA){$('phase').textContent='Menyiapkan suara…';
+      if(!(await MB.canEncodeAudio('aac'))){wantA=false;addCheck('Encoder AAC',null,'tidak tersedia, ekspor tanpa suara');}
+      else{audioBuf=await synthAudio();addCheck('Suara sintetis 120 BPM',true,'5.0 dtk, 48 kHz stereo');}}
+    $('phase').textContent='2/4 Merender & mengenkode frame…';logStep('mulai render');
+    const scene=makeScene(st.variant,W,H);await scene.init();
+    const output=new MB.Output({format:new MB.Mp4OutputFormat({fastStart:'in-memory'}),target:new MB.BufferTarget()});
+    const vsrc=new MB.CanvasSource(scene.canvas,{codec:'avc',quality:new MB.Quality({bitrate})});
+    output.addVideoTrack(vsrc,{frameRate:FPS});
+    let asrc=null;if(wantA){asrc=new MB.AudioBufferSource({codec:'aac',quality:new MB.Quality({bitrate:128e3})});output.addAudioTrack(asrc);}
+    await output.start();
+    if(asrc){await asrc.add(audioBuf);asrc.close();}
+    let dMs=0,aMs=0;const tr=performance.now();
+    for(let n=0;n<FRAMES;n++){
+      abortCheck();
+      const a=performance.now();scene.draw(n);const b=performance.now();
+      await vsrc.add(n/FPS,1/FPS,n===0?{keyFrame:true}:undefined);
+      dMs+=b-a;aMs+=performance.now()-b;
+      $('bar').style.width=((n+1)/FRAMES*85).toFixed(1)+'%';
+      if(n%3===0){cx.drawImage(scene.canvas,0,0,960,540);$('tc').textContent=`render ${n+1} / ${FRAMES}`;await sleep(0);}
+    }
+    vsrc.close();await output.finalize();
+    const rt=performance.now()-tr;
+    r.timing['render+enkode total']=(rt/1000).toFixed(1)+' dtk';
+    r.timing['gambar rata-rata']=(dMs/FRAMES).toFixed(1)+' ms/frame';
+    r.timing['enkode rata-rata']=(aMs/FRAMES).toFixed(1)+' ms/frame';
+    r.timing['perkiraan 1800 frame (kasar, adegan ini)']=(rt/FRAMES*1800/60000).toFixed(1)+' menit';
+    const buf=output.target.buffer;if(!buf)throw new Error('Output.target.buffer kosong setelah finalize');
+    const blob=new Blob([buf],{type:'video/mp4'});logStep('finalize selesai '+fmtB(blob.size));
+    $('phase').textContent='3/4 Validasi file MP4…';$('bar').style.width='92%';
+    await validate(MB,blob,W,H,wantA);
+    $('phase').textContent='4/4 Uji pemutaran…';
+    await showResult(blob,W,H);
+    $('bar').style.width='100%';
+  }catch(e){
+    console.error(e);logStep('GAGAL: '+(e&&e.name)+': '+(e&&e.message));
+    showErr(true,e);$('phase').textContent=e&&e.name==='AbortError'?'Dibatalkan.':'Gagal — lihat pesan di atas.';
+  }finally{
+    try{await wake?.release();}catch{}
+    st.busy=false;$('btnExport').disabled=false;$('btnCancel').hidden=true;frameShown=-1;renderReport();
+  }
+}
+async function validate(MB,blob,W,H,wantA){
+  const chk=async(label,fn)=>{try{const d=await fn();addCheck(label,d.ok,d.detail);return d.ok;}catch(e){addCheck(label,false,'error: '+(e.message||e));return false;}};
+  addCheck('Ukuran file',blob.size>20000,fmtB(blob.size));
+  const input=new MB.Input({source:new MB.BlobSource(blob),formats:MB.ALL_FORMATS});
+  let vt=null;
+  await chk('Format container MP4',async()=>{const f=await input.getFormat();return{ok:/mp4/i.test(f.name),detail:f.name};});
+  await chk('Track video & dimensi',async()=>{vt=await input.getPrimaryVideoTrack();const w=await vt.getDisplayWidth(),h=await vt.getDisplayHeight();return{ok:w===W&&h===H,detail:`${w}x${h}`};});
+  await chk('Jumlah frame = 150',async()=>{let n=0,key=0;const s=new MB.EncodedPacketSink(vt);for await(const p of s.packets(undefined,undefined,{metadataOnly:true})){n++;if(p.type==='key')key++;}return{ok:n===FRAMES,detail:`${n} frame, ${key} keyframe`};});
+  await chk('Durasi ≈ 5.0 dtk',async()=>{const d=await input.computeDuration();return{ok:Math.abs(d-5)<.15,detail:d.toFixed(3)+' dtk'};});
+  await chk('Dekode frame awal & akhir',async()=>{const s=new MB.VideoSampleSink(vt);const c=document.createElement('canvas');c.width=64;c.height=36;const x=c.getContext('2d',{willReadFrequently:true});
+    const lum=async smp=>{x.clearRect(0,0,64,36);smp.draw(x,0,0,64,36);smp.close();const d=x.getImageData(0,0,64,36).data;let m=0;for(let i=0;i<d.length;i+=4)m+=d[i]*.3+d[i+1]*.59+d[i+2]*.11;return m/(d.length/4);};
+    const a=await s.getSample(0),b=await s.getSample(Infinity);if(!a||!b)return{ok:false,detail:'sample null'};
+    const la=await lum(a),lb=await lum(b);return{ok:lb>10,detail:`terang awal ${la.toFixed(0)}, akhir ${lb.toFixed(0)} (akhir harus berisi logo)`};});
+  if(wantA)await chk('Track audio AAC',async()=>{const at=await input.getPrimaryAudioTrack();return{ok:!!at,detail:at?'ada':'tidak ada'};});
+  try{input.dispose?.();}catch{}
+}
+async function showResult(blob,W,H){
+  const url=URL.createObjectURL(blob),v=$('vid');v.src=url;v.currentTime=0;
+  $('dl').href=url;$('dl').download=`rytech-logo-reveal-${H}p-${st.variant}.mp4`;
+  const ok=await new Promise(res=>{let done=false;const fin=o=>{if(!done){done=true;res(o);}};
+    v.onerror=()=>fin({ok:false,detail:'video error '+(v.error&&v.error.message||v.error?.code)});
+    v.onloadedmetadata=()=>{v.play().catch(()=>{});};
+    v.ontimeupdate=()=>{if(v.currentTime>.6)fin({ok:true,detail:`${v.videoWidth}x${v.videoHeight}, durasi ${v.duration.toFixed(2)} dtk`});};
+    setTimeout(()=>fin({ok:false,detail:'tidak ada kemajuan pemutaran dalam 5 dtk'}),5000);});
+  addCheck('Pemutar browser memutar file',ok.ok,ok.detail);
+  const allOk=st.rep.checks.every(c=>c.ok!==false);
+  $('resTitle').textContent=allOk?'✅ Ekspor selesai & lolos validasi otomatis':'⚠️ File dibuat, tetapi ada pemeriksaan yang GAGAL';
+  $('checks').innerHTML=st.rep.checks.map(c=>`<li class="${c.ok===true?'ok':c.ok===false?'no':'wn'}">${c.ok===true?'✓':c.ok===false?'✗':'•'} ${c.label}${c.detail?' <small>— '+c.detail+'</small>':''}</li>`).join('');
+  $('phase').textContent=allOk?'Selesai. Semua pemeriksaan otomatis lulus.':'Selesai, tetapi ada pemeriksaan yang gagal (lihat daftar).';
+  $('result').hidden=false;$('result').scrollIntoView({behavior:'smooth'});
+}
+$('btnExport').onclick=doExport;$('btnCancel').onclick=()=>{st.abort=true;};
+$('playOk').onclick=()=>{st.rep.userPlayback='YA, terputar normal di HP';renderReport();$('playOk').textContent='✅ Tercatat';};
+$('playBad').onclick=()=>{st.rep.userPlayback='TIDAK terputar / bermasalah';renderReport();$('playBad').textContent='❌ Tercatat';};
+$('btnCopy').onclick=async()=>{const t=$('report').textContent;try{await navigator.clipboard.writeText(t);$('btnCopy').textContent='✓ Tersalin';}catch{const r=document.createRange();r.selectNodeContents($('report'));const s=getSelection();s.removeAllRanges();s.addRange(r);$('btnCopy').textContent='Teks terpilih, tekan Salin';}};
+
+/* ================= PERBANDINGAN LOGO ================= */
+(()=>{const u=s=>URL.createObjectURL(new Blob([s],{type:'image/svg+xml'}));
+  $('cmp').innerHTML=['a','b'].flatMap(v=>[`<div class="d">Versi ${v.toUpperCase()} · gelap<img src="${u(LOGOS[v].dark)}"></div>`,`<div class="l">Versi ${v.toUpperCase()} · terang<img src="${u(LOGOS[v].light)}"></div>`]).join('');})();
+
+/* ================= START ================= */
+(async()=>{
+  await collectEnv();renderReport();
+  if(typeof gsap==='undefined'){showErr('',['GSAP gagal dimuat','Periksa koneksi internet lalu muat ulang.']);return;}
+  try{await loadPreview();}catch(e){showErr('Pratinjau gagal',e);}
+  requestAnimationFrame(loop);
+  await initSupport();
+  $('phase').textContent=st.mbReady?'Siap. Tekan Export MP4.':'Pratinjau siap, tetapi ekspor belum bisa (lihat pesan).';
+  $('btnExport').disabled=!st.mbReady;
+})();
+</script>
+</body></html>
